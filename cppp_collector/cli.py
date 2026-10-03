@@ -80,7 +80,7 @@ def main():
     if args.validate:
         if not args.schema:
             print(
-                "[ERROR] --schema required with --validate",
+                "error: --schema required with --validate",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -88,7 +88,7 @@ def main():
         schema_path = Path(args.schema)
         if not schema_path.exists():
             print(
-                f"[ERROR] Schema not found: {args.schema}",
+                f"error: Schema not found: {args.schema}",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -98,12 +98,12 @@ def main():
 
         errors = validate_tenders(tenders, schema)
         if errors:
-            print(f"[ERROR] Validation failed: {len(errors)} errors")
+            print(f"error: Validation failed: {len(errors)} errors")
             for err in errors:
                 print(f"  - {err}")
             sys.exit(1)
         else:
-            print(f"[OK] All {len(tenders)} tenders validated")
+            print(f"success: All {len(tenders)} tenders validated")
 
     # Output
     if args.output:
@@ -114,7 +114,7 @@ def main():
                 indent=2 if args.pretty else None,
                 ensure_ascii=False,
             )
-        print(f"\n[OK] Saved {len(tenders)} tenders to {args.output}")
+        print(f"\nsuccess: Saved {len(tenders)} tenders to {args.output}")
     else:
         # Output to stdout
         output = json.dumps(

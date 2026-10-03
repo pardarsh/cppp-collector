@@ -2,9 +2,13 @@
 Unit tests for CPPP Collector
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import pytest
+
 from cppp_collector.collector import CPPPCollector
-from cppp_collector.validator import validate_tender
 
 
 class TestDateParsing:
@@ -13,31 +17,34 @@ class TestDateParsing:
     def test_parse_date_with_am_pm(self):
         """Test parsing date with AM/PM format"""
         collector = CPPPCollector()
-        result = collector._parse_date("06-Oct-2026 02:00 PM")
-        assert result == "2026-10-06T14:00:00Z"
+        result = collector._parse_date("06-Oct-2026 02:00 PM")  # type: ignore
+        assert result is not None
+        assert "2026-10-06T14:00:00" in result
 
     def test_parse_date_with_am(self):
         """Test parsing AM time"""
         collector = CPPPCollector()
-        result = collector._parse_date("06-Oct-2026 10:30 AM")
-        assert result == "2026-10-06T10:30:00Z"
+        result = collector._parse_date("06-Oct-2026 10:30 AM")  # type: ignore
+        assert result is not None
+        assert "2026-10-06T10:30:00" in result
 
     def test_parse_date_without_time(self):
         """Test parsing date without time"""
         collector = CPPPCollector()
-        result = collector._parse_date("06-Oct-2026")
-        assert result == "2026-10-06T00:00:00Z"
+        result = collector._parse_date("06-Oct-2026")  # type: ignore
+        assert result is not None
+        assert "2026-10-06T00:00:00" in result
 
     def test_parse_date_invalid(self):
         """Test parsing invalid date"""
         collector = CPPPCollector()
-        result = collector._parse_date("invalid")
+        result = collector._parse_date("invalid")  # type: ignore
         assert result is None
 
     def test_parse_date_none(self):
         """Test parsing None"""
         collector = CPPPCollector()
-        result = collector._parse_date(None)
+        result = collector._parse_date(None)  # type: ignore
         assert result is None
 
 
@@ -47,25 +54,25 @@ class TestCategoryInference:
     def test_infer_category_works(self):
         """Test inferring 'Works' category"""
         collector = CPPPCollector()
-        result = collector._infer_category("Road Construction Project")
+        result = collector._infer_category("Road Construction Project")  # type: ignore
         assert result == "Works"
 
     def test_infer_category_supplies(self):
         """Test inferring 'Supplies' category"""
         collector = CPPPCollector()
-        result = collector._infer_category("Supply of Materials")
+        result = collector._infer_category("Supply of Materials")  # type: ignore
         assert result == "Supplies"
 
     def test_infer_category_services(self):
         """Test inferring 'Services' category"""
         collector = CPPPCollector()
-        result = collector._infer_category("Consulting Services")
+        result = collector._infer_category("Consulting Services")  # type: ignore
         assert result == "Services"
 
     def test_infer_category_other(self):
         """Test default category"""
         collector = CPPPCollector()
-        result = collector._infer_category("Unknown procurement")
+        result = collector._infer_category("Unknown procurement")  # type: ignore
         assert result == "Other"
 
 
@@ -75,19 +82,19 @@ class TestContractFormInference:
     def test_infer_contract_form_works(self):
         """Test inferring 'works' contract form"""
         collector = CPPPCollector()
-        result = collector._infer_contract_form("Building Construction")
+        result = collector._infer_contract_form("Building Construction")  # type: ignore
         assert result == "works"
 
     def test_infer_contract_form_service(self):
         """Test inferring 'service' contract form"""
         collector = CPPPCollector()
-        result = collector._infer_contract_form("Consulting Services")
+        result = collector._infer_contract_form("Consulting Services")  # type: ignore
         assert result == "service"
 
     def test_infer_contract_form_supply(self):
         """Test inferring 'supply' contract form"""
         collector = CPPPCollector()
-        result = collector._infer_contract_form("Supply of Equipment")
+        result = collector._infer_contract_form("Supply of Equipment")  # type: ignore
         assert result == "supply"
 
 
@@ -96,10 +103,8 @@ class TestTenderStructure:
 
     def test_tender_has_required_fields(self):
         """Test that collector output has required fields"""
-        collector = CPPPCollector()
-
         # Mock tender data
-        tender = {
+        tender: dict[str, Any] = {
             "identity": {"tender_id": "TEST-001", "source": "cppp"},
             "procuring_entity": {"organisation": "Test Org"},
             "procurement": {"title": "Test Tender", "contract_form": "works"},

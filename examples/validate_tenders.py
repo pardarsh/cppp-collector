@@ -29,11 +29,11 @@ else:
     errors = validate_tenders(tenders, schema)
 
     if errors:
-        print(f"\n[FAIL] {len(errors)} validation errors:\n")
+        print(f"\nerror: {len(errors)} validation errors:\n")
         for error in errors:
             print(f"  - {error}")
     else:
-        print(f"\n[OK] All {len(tenders)} tenders are valid!")
+        print(f"\nsuccess: All {len(tenders)} tenders are valid!")
 
     # Save validated tenders
     collector.save_tenders(tenders, "validated_tenders.json")

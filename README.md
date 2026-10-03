@@ -19,7 +19,7 @@ pip install -e .
 
 Or from git:
 ```bash
-pip install git+https://github.com/yourusername/cppp-collector.git
+pip install git+https://github.com/pardarsh/cppp-collector.git
 ```
 
 ## Quick Start
@@ -121,21 +121,6 @@ Tenders conform to `schema_procurement_normalized.json`:
 - **Optional**: documents, eligibility, awards, reference_number, etc.
 - **All dates**: ISO 8601 format (UTC) with Z suffix
 
-## Integration with Parakh
-
-Use as a submodule in the main Parakh repo:
-
-```bash
-# Add as submodule
-git submodule add https://github.com/yourusername/cppp-collector.git collectors/cppp-collector
-
-# Install
-pip install -e ./collectors/cppp-collector
-
-# Use in Python
-from cppp_collector import CPPPCollector
-```
-
 ## Development
 
 ```bash
@@ -154,16 +139,6 @@ flake8 cppp_collector/
 # Type checking
 mypy cppp_collector/
 ```
-
-## Adding New Sources
-
-To add another government procurement source (e.g., Maharashtra):
-
-1. Create `cppp_collector/collectors/maharashtra.py`
-2. Implement scraping for that source
-3. Map to canonical schema
-4. Add tests in `tests/test_maharashtra.py`
-5. Update CLI to support `--source maharashtra`
 
 ## Limitations
 
@@ -188,12 +163,11 @@ MIT
 
 ## Contributing
 
-Contributions welcome! Please:
-1. Fork the repo
-2. Create a feature branch
-3. Add tests for new features
-4. Ensure `black`, `flake8`, `mypy` pass
-5. Submit a pull request
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+- Setting up development environment
+- Running tests and linting
+- Submitting pull requests
+- Code of conduct
 
 ## Support
 

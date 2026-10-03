@@ -2,14 +2,16 @@
 Schema validation for normalized procurement data
 """
 
-from typing import Any, Dict, List
+from __future__ import annotations
+
+from typing import Any
 
 import jsonschema
 
 
 def validate_tenders(
-    tenders: List[Dict[str, Any]], schema: Dict[str, Any]
-) -> List[str]:
+    tenders: list[dict[str, Any]], schema: dict[str, Any]
+) -> list[str]:
     """
     Validate tenders against schema
 
@@ -20,7 +22,7 @@ def validate_tenders(
     Returns:
         List of error messages (empty if valid)
     """
-    errors = []
+    errors: list[str] = []
 
     for i, tender in enumerate(tenders):
         try:
@@ -32,7 +34,7 @@ def validate_tenders(
     return errors
 
 
-def validate_tender(tender: Dict[str, Any], schema: Dict[str, Any]) -> bool:
+def validate_tender(tender: dict[str, Any], schema: dict[str, Any]) -> bool:
     """
     Validate a single tender against schema
 

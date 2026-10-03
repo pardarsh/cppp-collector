@@ -8,15 +8,17 @@ Scrapes Central Public Procurement Portal (CPPP) tenders from:
 Outputs normalized procurement data (schema_procurement_normalized.json format)
 """
 
+from __future__ import annotations
+
 import json
 import re
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 class CPPPCollector:
@@ -28,13 +30,11 @@ class CPPPCollector:
     def __init__(self, output_dir: str = "data/raw/cppp"):
         self.session = requests.Session()
         self.session.headers.update(
-            {
-                "User-Agent": "CPPP-Collector/1.0 (+https://github.com/yourusername/cppp-collector)"
-            }
+            {"User-Agent": "CPPP-Collector/1.0 (+github.com/cppp-collector)"}
         )
         self.output_dir = output_dir
 
-    def collect_from_epublishing(self, limit: int = 10) -> List[Dict[str, Any]]:
+    def collect_from_epublishing(self, limit: int = 10) -> list[dict[str, Any]]:
         """
         Collect tenders from CPPP ePublishing (latest tenders)
 
@@ -45,7 +45,7 @@ class CPPPCollector:
             List of normalized procurement records
         """
         print(f"[CPPP ePublishing] Fetching latest {limit} tenders...")
-        tenders = []
+        tenders: list[dict[str, Any]] = []
 
         try:
             # Fetch ePublishing page (no params - params cause redirect to minimal page)
@@ -57,7 +57,7 @@ class CPPPCollector:
             # Find the active tenders table (id="activeTenders")
             tender_table = soup.find("table", id="activeTenders")
             if not tender_table:
-                print("  [!] Could not find tenders table")
+                print("  error: Could not find tenders table")
                 return tenders
 
             # Get all rows from the table
@@ -68,20 +68,20 @@ class CPPPCollector:
                     tender = self._parse_epublishing_row(row)
                     if tender:
                         tenders.append(tender)
-                except Exception as e:
-                    print(f"  [WARN] Error parsing row {i}: {e}")
+                except Exception as e:  # noqa: BLE001
+                    print(f"  warn: Error parsing row {i}: {e}")
                     continue
 
-            print(f"  [OK] Collected {len(tenders)} tenders from ePublishing")
+            print(f"  success: Collected {len(tenders)} tenders from ePublishing")
 
         except requests.RequestException as e:
-            print(f"  [FAIL] Failed to fetch ePublishing: {e}")
+            print(f"  error: Failed to fetch ePublishing: {e}")
 
         return tenders
 
     def collect_from_eprocurement(
-        self, search_params: Optional[Dict] = None, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+        self, search_params: dict[Any, Any] | None = None, limit: int = 10
+    ) -> list[dict[str, Any]]:
         """
         Collect tenders from CPPP eProcurement (active tenders)
 
@@ -98,7 +98,7 @@ class CPPPCollector:
             List of normalized procurement records
         """
         print(f"[CPPP eProcurement] Fetching active tenders (limit: {limit})...")
-        tenders = []
+        tenders: list[dict[str, Any]] = []
 
         try:
             # Advanced search page with proper query params
@@ -112,28 +112,31 @@ class CPPPCollector:
             soup = BeautifulSoup(response.content, "html.parser")
 
             # Advanced search provides more metadata
-            tender_rows = soup.find_all("tr", class_=re.compile("result|tender", re.I))
+            tender_rows = soup.find_all(
+                "tr", class_=re.compile("result|tender", re.IGNORECASE)
+            )
 
             for i, row in enumerate(tender_rows[:limit]):
                 try:
                     tender = self._parse_eprocurement_row(row)
                     if tender:
                         tenders.append(tender)
-                except Exception as e:
-                    print(f"  [WARN] Error parsing row {i}: {e}")
+                except Exception as e:  # noqa: BLE001
+                    print(f"  warn: Error parsing row {i}: {e}")
                     continue
 
-            print(f"  [OK] Collected {len(tenders)} tenders from eProcurement")
+            print(f"  success: Collected {len(tenders)} tenders from eProcurement")
 
         except requests.RequestException as e:
-            print(f"  [FAIL] Failed to fetch eProcurement: {e}")
+            print(f"  error: Failed to fetch eProcurement: {e}")
             print(
-                "  Note: eProcurement may have CAPTCHA protection or session requirements"
+                "note: eProcurement may have CAPTCHA protection or session "
+                "requirements"
             )
 
         return tenders
 
-    def _parse_epublishing_row(self, row: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def _parse_epublishing_row(self, row: Tag) -> dict[str, Any] | None:
         """Parse a tender row from ePublishing"""
         cells = row.find_all("td")
         if len(cells) < 4:
@@ -154,7 +157,7 @@ class CPPPCollector:
         # Find tender link for URL
         tender_link = row.find("a", href=True)
         source_url = (
-            urljoin(self.BASE_URL_EPUBLISH, tender_link["href"])
+            urljoin(self.BASE_URL_EPUBLISH, tender_link["href"])  # type: ignore
             if tender_link
             else None
         )
@@ -177,14 +180,14 @@ class CPPPCollector:
                 "opening_at": self._parse_date(opening_date),
             },
             "metadata": {
-                "extracted_at": datetime.utcnow().isoformat() + "Z",
+                "extracted_at": datetime.now(tz=timezone.utc).isoformat() + "Z",
                 "extracted_by": "CPPPCollector",
                 "extraction_method": "scraper",
                 "confidence": 0.85,
             },
         }
 
-    def _parse_eprocurement_row(self, row: BeautifulSoup) -> Optional[Dict[str, Any]]:
+    def _parse_eprocurement_row(self, row: Tag) -> dict[str, Any] | None:
         """Parse a tender row from eProcurement advanced search"""
         cells = row.find_all("td")
         if len(cells) < 3:
@@ -214,7 +217,7 @@ class CPPPCollector:
             },
             "timeline": {"closing_at": self._parse_date(closing_date)},
             "metadata": {
-                "extracted_at": datetime.utcnow().isoformat() + "Z",
+                "extracted_at": datetime.now(tz=timezone.utc).isoformat() + "Z",
                 "extracted_by": "CPPPCollector",
                 "extraction_method": "scraper",
                 "confidence": 0.8,
@@ -222,7 +225,7 @@ class CPPPCollector:
         }
 
     @staticmethod
-    def _parse_date(date_str: Optional[str]) -> Optional[str]:
+    def _parse_date(date_str: str | None) -> str | None:
         """Parse date string to ISO format"""
         if not date_str:
             return None
@@ -232,17 +235,17 @@ class CPPPCollector:
         # Try common Indian date formats including AM/PM
         formats = [
             "%d-%b-%Y %I:%M %p",  # 06-Oct-2026 02:00 PM
-            "%d-%m-%Y %H:%M",     # 06-10-2026 14:00
-            "%d/%m/%Y %H:%M",     # 06/10/2026 14:00
-            "%d-%b-%Y",           # 06-Oct-2026
-            "%d-%m-%Y",           # 06-10-2026
-            "%d/%m/%Y",           # 06/10/2026
-            "%Y-%m-%d",           # 2026-10-06
+            "%d-%m-%Y %H:%M",  # 06-10-2026 14:00
+            "%d/%m/%Y %H:%M",  # 06/10/2026 14:00
+            "%d-%b-%Y",  # 06-Oct-2026
+            "%d-%m-%Y",  # 06-10-2026
+            "%d/%m/%Y",  # 06/10/2026
+            "%Y-%m-%d",  # 2026-10-06
         ]
 
         for fmt in formats:
             try:
-                dt = datetime.strptime(date_str, fmt)
+                dt = datetime.strptime(date_str, fmt).replace(tzinfo=timezone.utc)
                 return dt.isoformat() + "Z"
             except ValueError:
                 continue
@@ -283,7 +286,7 @@ class CPPPCollector:
         return "works"
 
     def save_tenders(
-        self, tenders: List[Dict[str, Any]], filename: str = "cppp_tenders.json"
+        self, tenders: list[dict[str, Any]], filename: str = "cppp_tenders.json"
     ):
         """Save collected tenders to JSON file"""
         import os
@@ -295,17 +298,17 @@ class CPPPCollector:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(tenders, f, indent=2, ensure_ascii=False)
 
-        print(f"[OK] Saved {len(tenders)} tenders to {filepath}")
+        print(f"success: Saved {len(tenders)} tenders to {filepath}")
 
         return filepath
 
     def collect_all(
         self, epublish_limit: int = 5, eprocure_limit: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Collect from both ePublishing and eProcurement"""
         print("\n=== CPPP Tender Collection ===\n")
 
-        all_tenders = []
+        all_tenders: list[dict[str, Any]] = []
 
         # Collect from ePublishing
         epublish_tenders = self.collect_from_epublishing(limit=epublish_limit)
@@ -317,6 +320,6 @@ class CPPPCollector:
         eprocure_tenders = self.collect_from_eprocurement(limit=eprocure_limit)
         all_tenders.extend(eprocure_tenders)
 
-        print(f"\n[OK] Total collected: {len(all_tenders)} tenders")
+        print(f"\nsuccess: Total collected: {len(all_tenders)} tenders")
 
         return all_tenders

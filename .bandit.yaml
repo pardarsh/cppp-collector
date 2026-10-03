@@ -1,0 +1,40 @@
+assert_used:
+  skips: ['*/tests/*']
+
+exclude_dirs:
+  - '/tests'
+  - '/venv'
+  - '/env'
+
+tests:
+  - B101  # assert_used
+  - B601  # paramiko_calls
+  - B602  # subprocess_popen_with_shell_equals_true
+  - B605  # start_process_with_partial_shell
+  - B607  # start_process_with_no_shell
+  - B108  # hardcoded_tmp_directory
+  - B110  # try_except_pass
+  - B112  # try_except_continue
+  - B303  # use_of_insecure_MD2_MD4_MD5_SHA
+  - B304  # use_of_insecure_DES
+  - B305  # use_of_insecure_RAND
+  - B306  # use_of_insecure_RANDOM
+  - B307  # use_of_pickle
+  - B308  # use_of_mark_safe
+  - B309  # use_of_httpsconnection
+  - B310  # urllib_urlopen
+  - B311  # random
+  - B312  # telnetlib
+  - B313  # xml_bad_etree
+  - B314  # xml_bad_expat
+  - B315  # xml_bad_sax
+  - B316  # xml_bad_pulldom
+  - B317  # xml_bad_etree
+  - B318  # xml_bad_etree
+  - B319  # xml_bad_etree
+  - B320  # xml_bad_etree
+  - B321  # pickle
+  - B322  # unverified_context
+  - B323  # unverified_context
+  - B324  # hash_builtin
+  - B325  # tempnam
